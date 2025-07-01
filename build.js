@@ -28,5 +28,4 @@ try {
 } catch (error) {
   console.error('❌ Build failed:', error.message);
   process.exit(1);
-}cess.exit(1);
 }
