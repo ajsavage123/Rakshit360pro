@@ -3,7 +3,7 @@
 const { execSync } = require('child_process');
 const path = require('path');
 
-const __dirname = process.cwd();
+const rootDir = process.cwd();
 
 try {
   console.log('🔨 Building Medical AI Assistant for Vercel...');
@@ -11,14 +11,14 @@ try {
   // Install client dependencies
   console.log('📦 Installing client dependencies...');
   execSync('npm install', { 
-    cwd: path.join(__dirname, 'client'), 
+    cwd: path.join(rootDir, 'client'), 
     stdio: 'inherit' 
   });
   
   // Build the client
   console.log('🏗️ Building client application...');
   execSync('npm run build', { 
-    cwd: path.join(__dirname, 'client'), 
+    cwd: path.join(rootDir, 'client'), 
     stdio: 'inherit' 
   });
   
