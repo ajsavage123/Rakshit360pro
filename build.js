@@ -3,7 +3,7 @@
 const { execSync } = require('child_process');
 const path = require('path');
 
-const __dirname = __dirname;
+const __dirname = process.cwd();
 
 try {
   console.log('🔨 Building Medical AI Assistant for Vercel...');
