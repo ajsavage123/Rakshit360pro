@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,8 +14,7 @@ const HospitalAdmin = () => {
     phone: '',
     specialty: '',
     opening_hours: '',
-    latitude: 0,
-    longitude: 0,
+    location: '', // Changed to location string
     rating: 0
   });
 
@@ -25,11 +23,12 @@ const HospitalAdmin = () => {
     setLoading(true);
 
     try {
+      // Assuming hospitalService.addHospital is updated to handle the location string
       await hospitalService.addHospital({
         ...formData,
         specialty: formData.specialty.split(',').map(s => s.trim())
       });
-      
+
       // Reset form
       setFormData({
         name: '',
@@ -37,8 +36,7 @@ const HospitalAdmin = () => {
         phone: '',
         specialty: '',
         opening_hours: '',
-        latitude: 0,
-        longitude: 0,
+        location: '', // Reset location
         rating: 0
       });
       setIsAdding(false);
@@ -75,7 +73,7 @@ const HospitalAdmin = () => {
               required
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium mb-1">Address</label>
             <Input
@@ -84,7 +82,7 @@ const HospitalAdmin = () => {
               required
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium mb-1">Phone</label>
             <Input
@@ -93,7 +91,7 @@ const HospitalAdmin = () => {
               required
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium mb-1">Specialties (comma-separated)</label>
             <Input
@@ -103,7 +101,7 @@ const HospitalAdmin = () => {
               required
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium mb-1">Opening Hours</label>
             <Input
@@ -113,30 +111,19 @@ const HospitalAdmin = () => {
               required
             />
           </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Latitude</label>
-              <Input
-                type="number"
-                step="any"
-                value={formData.latitude}
-                onChange={(e) => setFormData({...formData, latitude: parseFloat(e.target.value)})}
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Longitude</label>
-              <Input
-                type="number"
-                step="any"
-                value={formData.longitude}
-                onChange={(e) => setFormData({...formData, longitude: parseFloat(e.target.value)})}
-                required
-              />
-            </div>
+
+          {/* Location input - expects "longitude latitude" */}
+          <div>
+            <label className="block text-sm font-medium mb-1">Location (Longitude Latitude)</label>
+            <Input
+              type="text"
+              value={formData.location}
+              onChange={(e) => setFormData({...formData, location: e.target.value})}
+              placeholder="e.g., -73.9857 40.7484"
+              required
+            />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium mb-1">Rating (0-5)</label>
             <Input
@@ -148,7 +135,7 @@ const HospitalAdmin = () => {
               onChange={(e) => setFormData({...formData, rating: parseFloat(e.target.value)})}
             />
           </div>
-          
+
           <div className="flex gap-2">
             <Button type="submit" disabled={loading} className="bg-green-600 hover:bg-green-700">
               <Save className="w-4 h-4 mr-2" />

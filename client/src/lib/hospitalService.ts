@@ -5,8 +5,7 @@ import { geoapifyService, Location, Hospital } from './geoapify'
 export interface EnhancedHospital extends Hospital {
   specialty: string[]
   opening_hours: string
-  latitude: number
-  longitude: number
+  location?: { lat: number; lng: number }
   source: 'supabase' | 'geoapify'
 }
 
@@ -39,43 +38,45 @@ class HospitalService {
     const hospitals: EnhancedHospital[] = []
 
     try {
-      // 1. First, get hospitals from Supabase database
-      const { data: supabaseHospitals, error } = await supabase
+      // 1. First, get hospitals from Supabase database using PostGIS
+      const userPoint = `SRID=4326;POINT(${location.lng} ${location.lat})`
+      
+      let query = supabase
         .from('hospitals')
-        .select('*')
+        .select(`
+          id, name, address, phone, rating, specialty, opening_hours,
+          ST_X(location::geometry) as longitude,
+          ST_Y(location::geometry) as latitude,
+          ST_Distance(location, ST_GeogFromText('${userPoint}')) as distance_meters
+        `)
+        .filter('location', 'not.is', null)
+        .lte('distance_meters', radius)
+
+      // Add specialty filter if provided
+      if (specialty) {
+        query = query.contains('specialty', [specialty])
+      }
+
+      const { data: supabaseHospitals, error } = await query
+        .order('distance_meters', { ascending: true })
+        .limit(20)
 
       if (error) {
         console.warn('Supabase query failed:', error)
       } else if (supabaseHospitals) {
-        // Filter hospitals within radius and by specialty
         supabaseHospitals.forEach(hospital => {
-          const hospitalLocation = { lat: hospital.latitude, lng: hospital.longitude }
-          const distance = this.calculateDistance(location, hospitalLocation)
-
-          if (distance <= radius) {
-            // Check if hospital matches specialty
-            const matchesSpecialty = !specialty || 
-              hospital.specialty.some(spec => 
-                spec.toLowerCase().includes(specialty.toLowerCase()) ||
-                specialty.toLowerCase().includes(spec.toLowerCase())
-              )
-
-            if (matchesSpecialty || !specialty) {
-              hospitals.push({
-                id: hospital.id,
-                name: hospital.name,
-                address: hospital.address,
-                phone: hospital.phone,
-                rating: hospital.rating,
-                distance: this.formatDistance(distance),
-                specialty: hospital.specialty,
-                opening_hours: hospital.opening_hours,
-                latitude: hospital.latitude,
-                longitude: hospital.longitude,
-                source: 'supabase'
-              })
-            }
-          }
+          hospitals.push({
+            id: hospital.id,
+            name: hospital.name,
+            address: hospital.address,
+            phone: hospital.phone,
+            rating: hospital.rating,
+            distance: this.formatDistance(hospital.distance_meters),
+            specialty: hospital.specialty,
+            opening_hours: hospital.opening_hours,
+            location: { lat: hospital.latitude, lng: hospital.longitude },
+            source: 'supabase'
+          })
         })
       }
 
@@ -96,8 +97,7 @@ class HospitalService {
                 ...geoHospital,
                 specialty: specialty ? [specialty] : ['General Medicine'],
                 opening_hours: 'Hours not available',
-                latitude: 0, // Will be geocoded if needed
-                longitude: 0,
+                location: { lat: 0, lng: 0 }, // Will be geocoded if needed
                 source: 'geoapify'
               })
             }
@@ -124,8 +124,7 @@ class HospitalService {
         ...hospital,
         specialty: specialty ? [specialty] : ['General Medicine'],
         opening_hours: 'Hours not available',
-        latitude: 0,
-        longitude: 0,
+        location: { lat: 0, lng: 0 },
         source: 'geoapify' as const
       }))
     }
@@ -142,9 +141,16 @@ class HospitalService {
     rating?: number
   }) {
     const { data, error } = await supabase
-      .from('hospitals')
-      .insert([hospitalData])
-      .select()
+      .rpc('insert_hospital_with_location', {
+        hospital_name: hospitalData.name,
+        hospital_address: hospitalData.address,
+        hospital_phone: hospitalData.phone,
+        hospital_specialty: hospitalData.specialty,
+        hospital_opening_hours: hospitalData.opening_hours,
+        hospital_longitude: hospitalData.longitude,
+        hospital_latitude: hospitalData.latitude,
+        hospital_rating: hospitalData.rating || 0
+      })
 
     if (error) {
       throw new Error(`Failed to add hospital: ${error.message}`)
