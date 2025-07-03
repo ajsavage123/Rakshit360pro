@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MapPin, Phone, Clock, Star, Navigation, AlertCircle, Share2, Search } from "lucide-react";
 import { geoapifyService, Location, Hospital } from "@/lib/geoapify";
+import { hospitalService, EnhancedHospital } from "@/lib/hospitalService";
 
 interface HospitalRecommendationsProps {
   specialty: string;
@@ -11,7 +12,7 @@ interface HospitalRecommendationsProps {
 }
 
 const HospitalRecommendations = ({ specialty, userLocation, summary }: HospitalRecommendationsProps) => {
-  const [hospitals, setHospitals] = useState<Hospital[]>([]);
+  const [hospitals, setHospitals] = useState<EnhancedHospital[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedHospital, setSelectedHospital] = useState<string | null>(null);
@@ -147,8 +148,8 @@ const HospitalRecommendations = ({ specialty, userLocation, summary }: HospitalR
     try {
       setLoading(true);
       setError(null);
-      // Pass the specialty to filter hospitals by recommended specialty
-      const hospitalData = await geoapifyService.searchHospitals(location, specialty);
+      // Use enhanced hospital service that combines Supabase and Geoapify
+      const hospitalData = await hospitalService.searchNearbyHospitals(location, specialty);
       setHospitals(hospitalData);
     } catch (err) {
       console.error('Error fetching hospitals:', err);
@@ -540,7 +541,33 @@ const HospitalRecommendations = ({ specialty, userLocation, summary }: HospitalR
                             <MapPin className="w-3 h-3 mr-1 text-blue-500" />
                             {hospital.distance}
                           </div>
+                          {hospital.source === 'supabase' && (
+                            <div className="flex items-center">
+                              <Stethoscope className="w-3 h-3 mr-1 text-green-500" />
+                              <span className="text-green-600 font-medium">Verified</span>
+                            </div>
+                          )}
                         </div>
+                        {('specialty' in hospital) && hospital.specialty && hospital.specialty.length > 0 && (
+                          <div className="mb-2">
+                            <div className="flex flex-wrap gap-1">
+                              {hospital.specialty.slice(0, 3).map((spec, index) => (
+                                <span key={index} className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full">
+                                  {spec}
+                                </span>
+                              ))}
+                              {hospital.specialty.length > 3 && (
+                                <span className="text-xs text-gray-500">+{hospital.specialty.length - 3} more</span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        {('opening_hours' in hospital) && hospital.opening_hours && hospital.opening_hours !== 'Hours not available' && (
+                          <div className="mb-2 text-xs text-gray-600 dark:text-gray-400">
+                            <Clock className="w-3 h-3 inline mr-1" />
+                            {hospital.opening_hours}
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="flex flex-col gap-2 mt-2">

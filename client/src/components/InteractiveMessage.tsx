@@ -60,14 +60,14 @@ const InteractiveMessage = ({
                 size="sm"
                 onClick={() => onOptionSelect && onOptionSelect(option)}
                 disabled={!!selectedOption}
-                className={`w-full text-left transition-all duration-200 text-xs font-medium py-1 min-h-[32px] whitespace-normal break-words
+                className={`w-full text-left transition-all duration-200 text-xs font-medium py-2 px-3 min-h-[40px] whitespace-normal break-words leading-relaxed
                   ${selectedOption === option.value 
                     ? 'bg-white/20 text-white hover:bg-white/30 border-white/30 shadow-md' 
                     : 'border-white/40 hover:bg-white/10 text-white/90 hover:text-white bg-transparent hover:border-white/60'
                   }
                 `}
               >
-                <span className="whitespace-normal break-words block text-xs">
+                <span className="whitespace-normal break-words block text-xs leading-relaxed hyphens-auto">
                   {option.label}
                 </span>
               </Button>
