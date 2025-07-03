@@ -14,7 +14,8 @@ const HospitalAdmin = () => {
     phone: '',
     specialty: '',
     opening_hours: '',
-    location: '', // Changed to location string
+    latitude: 0,
+    longitude: 0,
     rating: 0
   });
 
@@ -36,7 +37,8 @@ const HospitalAdmin = () => {
         phone: '',
         specialty: '',
         opening_hours: '',
-        location: '', // Reset location
+        latitude: 0,
+        longitude: 0,
         rating: 0
       });
       setIsAdding(false);
@@ -112,16 +114,29 @@ const HospitalAdmin = () => {
             />
           </div>
 
-          {/* Location input - expects "longitude latitude" */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Location (Longitude Latitude)</label>
-            <Input
-              type="text"
-              value={formData.location}
-              onChange={(e) => setFormData({...formData, location: e.target.value})}
-              placeholder="e.g., -73.9857 40.7484"
-              required
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Latitude</label>
+              <Input
+                type="number"
+                step="any"
+                value={formData.latitude || ''}
+                onChange={(e) => setFormData({...formData, latitude: parseFloat(e.target.value)})}
+                placeholder="e.g., 19.0760"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Longitude</label>
+              <Input
+                type="number"
+                step="any"
+                value={formData.longitude || ''}
+                onChange={(e) => setFormData({...formData, longitude: parseFloat(e.target.value)})}
+                placeholder="e.g., 72.8777"
+                required
+              />
+            </div>
           </div>
 
           <div>

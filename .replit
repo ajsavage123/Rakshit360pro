@@ -21,4 +21,4 @@ args = "npm run build"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "node server/index.ts"
+args = "node server/index.js"
